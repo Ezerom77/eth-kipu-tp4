@@ -14,34 +14,34 @@ describe("SimpleSwap", function () {
   let deadline;
 
   beforeEach(async function () {
-    // Obtener cuentas para pruebas
+    // Get accounts for testing
     [owner, user1, user2] = await ethers.getSigners();
 
-    // Desplegar tokens ERC20 de prueba
+    // Deploy test ERC20 tokens
     const TokenFactory = await ethers.getContractFactory("TestERC20");
     tokenA = await TokenFactory.deploy("Token A", "TKA", ethers.parseEther("1000000"));
     tokenB = await TokenFactory.deploy("Token B", "TKB", ethers.parseEther("1000000"));
 
-    // Desplegar contrato SimpleSwap
+    // Deploy SimpleSwap contract
     SimpleSwap = await ethers.getContractFactory("SimpleSwap");
     simpleSwap = await SimpleSwap.deploy(await tokenA.getAddress(), await tokenB.getAddress());
 
-    // Transferir tokens a usuarios de prueba
+    // Transfer tokens to test users
     await tokenA.transfer(user1.address, ethers.parseEther("10000"));
     await tokenB.transfer(user1.address, ethers.parseEther("10000"));
     await tokenA.transfer(user2.address, ethers.parseEther("10000"));
     await tokenB.transfer(user2.address, ethers.parseEther("10000"));
 
-    // Establecer deadline para transacciones
-    deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hora en el futuro
+    // Set deadline for transactions
+    deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour in the future
   });
 
   describe("Deployment", function () {
-    it("Debería establecer los tokens correctamente", async function () {
+    it("This should set the tokens correctly.", async function () {
       const tokenAAddress = await simpleSwap.tokenA();
       const tokenBAddress = await simpleSwap.tokenB();
 
-      // Verificar que los tokens se hayan establecido en el orden correcto (menor dirección primero)
+      // Verify that tokens have been set in the correct order (lower address first)
       if (await tokenA.getAddress() < await tokenB.getAddress()) {
         expect(tokenAAddress).to.equal(await tokenA.getAddress());
         expect(tokenBAddress).to.equal(await tokenB.getAddress());
@@ -52,16 +52,16 @@ describe("SimpleSwap", function () {
     });
   });
 
-  describe("Agregar liquidez", function () {
-    it("Debería agregar liquidez inicial correctamente", async function () {
+  describe("Add initial liquidity", function () {
+    it("This should add initial liquidity correctly.", async function () {
       const amountA = ethers.parseEther("100");
       const amountB = ethers.parseEther("200");
 
-      // Aprobar tokens para el contrato
+      // Approve tokens for the contract
       await tokenA.connect(user1).approve(await simpleSwap.getAddress(), amountA);
       await tokenB.connect(user1).approve(await simpleSwap.getAddress(), amountB);
 
-      // Agregar liquidez
+      // Add liquidity
       const tx = await simpleSwap.connect(user1).addLiquidity(
         await tokenA.getAddress(),
         await tokenB.getAddress(),
@@ -73,7 +73,7 @@ describe("SimpleSwap", function () {
         deadline
       );
 
-      // Verificar evento emitido
+      // Verify emitted event
       const receipt = await tx.wait();
       const event = receipt.logs.find(log => {
         try {
@@ -84,7 +84,7 @@ describe("SimpleSwap", function () {
       });
       expect(event).to.not.be.undefined;
 
-      // Verificar balances
+      // Verify balances
       const [reserveA, reserveB] = await simpleSwap.getReserves(
         await tokenA.getAddress(),
         await tokenB.getAddress()
@@ -92,13 +92,13 @@ describe("SimpleSwap", function () {
       expect(reserveA).to.equal(amountA);
       expect(reserveB).to.equal(amountB);
 
-      // Verificar tokens de liquidez
+      // Verify liquidity tokens
       const liquidityBalance = await simpleSwap.balanceOf(user1.address);
       expect(liquidityBalance).to.be.gt(0);
     });
 
-    it("Debería agregar liquidez adicional proporcionalmente", async function () {
-      // Primero agregar liquidez inicial
+    it("This should add additional liquidity proportionally", async function () {
+      // First add initial liquidity
       const initialAmountA = ethers.parseEther("100");
       const initialAmountB = ethers.parseEther("200");
 
@@ -116,9 +116,9 @@ describe("SimpleSwap", function () {
         deadline
       );
 
-      // Luego agregar más liquidez con user2
-      const additionalAmountA = ethers.parseEther("50"); // La mitad de la liquidez inicial de A
-      const additionalAmountB = ethers.parseEther("100"); // La mitad de la liquidez inicial de B
+      // Then add more liquidity with user2
+      const additionalAmountA = ethers.parseEther("50"); // Half of initial liquidity of A
+      const additionalAmountB = ethers.parseEther("100"); // Half of initial liquidity of B
 
       await tokenA.connect(user2).approve(await simpleSwap.getAddress(), additionalAmountA);
       await tokenB.connect(user2).approve(await simpleSwap.getAddress(), additionalAmountB);
@@ -134,7 +134,7 @@ describe("SimpleSwap", function () {
         deadline
       );
 
-      // Verificar reservas actualizadas
+      // Verify updated reserves
       const [reserveA, reserveB] = await simpleSwap.getReserves(
         await tokenA.getAddress(),
         await tokenB.getAddress()
@@ -142,15 +142,15 @@ describe("SimpleSwap", function () {
       expect(reserveA).to.equal(initialAmountA + additionalAmountA);
       expect(reserveB).to.equal(initialAmountB + additionalAmountB);
 
-      // Verificar tokens de liquidez para user2
+      // Verify liquidity tokens for user2
       const liquidityBalance = await simpleSwap.balanceOf(user2.address);
       expect(liquidityBalance).to.be.gt(0);
     });
   });
 
-  describe("Remover liquidez", function () {
-    it("Debería remover liquidez correctamente", async function () {
-      // Primero agregar liquidez
+  describe("Remove liquidity", function () {
+    it("Should remove liquidity correctly", async function () {
+      // First add liquidity
       const amountA = ethers.parseEther("100");
       const amountB = ethers.parseEther("200");
 
@@ -168,17 +168,17 @@ describe("SimpleSwap", function () {
         deadline
       );
 
-      // Obtener balance de liquidez
+      // Get liquidity balance
       const liquidityBalance = await simpleSwap.balanceOf(user1.address);
 
-      // Aprobar tokens de liquidez para quemar
+      // Approve liquidity tokens for burning
       await simpleSwap.connect(user1).approve(await simpleSwap.getAddress(), liquidityBalance);
 
-      // Balances iniciales de tokens
+      // Initial token balances
       const initialTokenABalance = await tokenA.balanceOf(user1.address);
       const initialTokenBBalance = await tokenB.balanceOf(user1.address);
 
-      // Remover toda la liquidez
+      // Remove all liquidity
       await simpleSwap.connect(user1).removeLiquidity(
         await tokenA.getAddress(),
         await tokenB.getAddress(),
@@ -189,14 +189,14 @@ describe("SimpleSwap", function () {
         deadline
       );
 
-      // Verificar que los tokens se hayan devuelto
+      // Verify that tokens have been returned
       const finalTokenABalance = await tokenA.balanceOf(user1.address);
       const finalTokenBBalance = await tokenB.balanceOf(user1.address);
 
       expect(finalTokenABalance).to.be.gt(initialTokenABalance);
       expect(finalTokenBBalance).to.be.gt(initialTokenBBalance);
 
-      // Verificar que las reservas estén vacías
+      // Verify that reserves are empty
       const [reserveA, reserveB] = await simpleSwap.getReserves(
         await tokenA.getAddress(),
         await tokenB.getAddress()
@@ -206,9 +206,9 @@ describe("SimpleSwap", function () {
     });
   });
 
-  describe("Swap de tokens", function () {
+  describe("Token swap", function () {
     beforeEach(async function () {
-      // Agregar liquidez para permitir swaps
+      // Add liquidity to allow swaps
       const amountA = ethers.parseEther("1000");
       const amountB = ethers.parseEther("1000");
 
@@ -227,34 +227,34 @@ describe("SimpleSwap", function () {
       );
     });
 
-    it("Debería intercambiar tokens A por tokens B", async function () {
+    it("Should swap token A for token B", async function () {
       const amountIn = ethers.parseEther("10");
       const path = [await tokenA.getAddress(), await tokenB.getAddress()];
 
-      // Calcular cantidad esperada de salida
+      // Calculate expected output amount
       const [reserveA, reserveB] = await simpleSwap.getReserves(
         await tokenA.getAddress(),
         await tokenB.getAddress()
       );
       const expectedAmountOut = await simpleSwap.getAmountOut(amountIn, reserveA, reserveB);
 
-      // Aprobar tokens para el swap
+      // Approve tokens for swap
       await tokenA.connect(user1).approve(await simpleSwap.getAddress(), amountIn);
 
-      // Balances iniciales
+      // Initial balances
       const initialTokenABalance = await tokenA.balanceOf(user1.address);
       const initialTokenBBalance = await tokenB.balanceOf(user1.address);
 
-      // Ejecutar swap
+      // Execute swap
       await simpleSwap.connect(user1).swapExactTokensForTokens(
         amountIn,
-        0, // Sin mínimo
+        0, // No minimum
         path,
         user1.address,
         deadline
       );
 
-      // Verificar balances finales
+      // Verify final balances
       const finalTokenABalance = await tokenA.balanceOf(user1.address);
       const finalTokenBBalance = await tokenB.balanceOf(user1.address);
 
@@ -262,34 +262,34 @@ describe("SimpleSwap", function () {
       expect(finalTokenBBalance - initialTokenBBalance).to.equal(expectedAmountOut);
     });
 
-    it("Debería intercambiar tokens B por tokens A", async function () {
+    it("Should swap token B for token A", async function () {
       const amountIn = ethers.parseEther("10");
       const path = [await tokenB.getAddress(), await tokenA.getAddress()];
 
-      // Calcular cantidad esperada de salida
+      // Calculate expected output amount
       const [reserveB, reserveA] = await simpleSwap.getReserves(
         await tokenB.getAddress(),
         await tokenA.getAddress()
       );
       const expectedAmountOut = await simpleSwap.getAmountOut(amountIn, reserveB, reserveA);
 
-      // Aprobar tokens para el swap
+      // Approve tokens for swap
       await tokenB.connect(user1).approve(await simpleSwap.getAddress(), amountIn);
 
-      // Balances iniciales
+      // Initial balances
       const initialTokenABalance = await tokenA.balanceOf(user1.address);
       const initialTokenBBalance = await tokenB.balanceOf(user1.address);
 
-      // Ejecutar swap
+      // Execute swap
       await simpleSwap.connect(user1).swapExactTokensForTokens(
         amountIn,
-        0, // Sin mínimo
+        0, // No minimum
         path,
         user1.address,
         deadline
       );
 
-      // Verificar balances finales
+      // Verify final balances
       const finalTokenABalance = await tokenA.balanceOf(user1.address);
       const finalTokenBBalance = await tokenB.balanceOf(user1.address);
 
@@ -298,9 +298,9 @@ describe("SimpleSwap", function () {
     });
   });
 
-  describe("Funciones de vista", function () {
+  describe("View functions", function () {
     beforeEach(async function () {
-      // Agregar liquidez para probar funciones de vista
+      // Add liquidity to test view functions
       const amountA = ethers.parseEther("100");
       const amountB = ethers.parseEther("200");
 
@@ -319,17 +319,17 @@ describe("SimpleSwap", function () {
       );
     });
 
-    it("Debería obtener el precio correcto", async function () {
+    it("Should get the correct price", async function () {
       const price = await simpleSwap.getPrice(
         await tokenA.getAddress(),
         await tokenB.getAddress()
       );
 
-      // El precio debería ser 2 (con 18 decimales) ya que tenemos 200 B por 100 A
+      // Price should be 2 (with 18 decimals) since we have 200 B for 100 A
       expect(price).to.equal(ethers.parseEther("2"));
     });
 
-    it("Debería calcular correctamente la cantidad de salida", async function () {
+    it("Should calculate output amount correctly", async function () {
       const amountIn = ethers.parseEther("10");
       const [reserveA, reserveB] = await simpleSwap.getReserves(
         await tokenA.getAddress(),
@@ -338,7 +338,7 @@ describe("SimpleSwap", function () {
 
       const amountOut = await simpleSwap.getAmountOut(amountIn, reserveA, reserveB);
 
-      // Verificar cálculo manual
+      // Verify manual calculation
       const numerator = amountIn * reserveB;
       const denominator = reserveA + amountIn;
       const expectedAmountOut = numerator / denominator;

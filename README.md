@@ -1,33 +1,33 @@
 # eth-kipu-tp4
 
-- Este repositorio contiene el TP4, segun las indicaciones del curso en donde se incluye ademas, una version del contrato de SimpleSwap con el feedback recibido en la correción del ultimo TP
+This repository contains TP4, following the course guidelines, which also includes a corrected version of the SimpleSwap contract with the feedback received from the last TP correction.
 
-## URL de despliegue
+### Deployment URL
 
 - https://eth-kipu-tp4.vercel.app/
 
-## Github
+### Github
 
 - https://github.com/Ezerom77/eth-kipu-tp4
 
-## Informacion relevante
+### Additional Information
 
-- Contract addresses : 0xD6324221906efCf1775a7484F5f7cA7b5fd32Bd9 (sepolia)
+- Contract addresses: 0xD6324221906efCf1775a7484F5f7cA7b5fd32Bd9 (sepolia)
 
-#### Token addresses :
+### Token addresses:
 
 - Token A: 0xF793f2189Fab2a9580D57592ffF335703dc9Ea59
 - Token B: 0x67C180f58081F4a9f588Cf9a930e70f0E036bEC3
 
-## Test
+## Hardhat Test
 
-- se crea un contrato de ERC20 con fines de testeo en contrato principal ya que se requieren dos tokens para su funcionamiento
+- An ERC20 contract is created for testing purposes in the main contract as two tokens are required for its operation
 
-## Explicación Detallada del Archivo de Test
+### Test Explanation
 
-El archivo `SimpleSwap.test.js` contiene pruebas exhaustivas para verificar el correcto funcionamiento del contrato SimpleSwap. A continuación se explica paso a paso cada sección:
+The `SimpleSwap.test.js` file contains tests to verify the correct functioning of the SimpleSwap contract. Each section is explained step by step:
 
-### 1. Configuración Inicial (Setup)
+#### 1. Initial Setup
 
 ```javascript
 beforeEach(async function () {
@@ -65,20 +65,19 @@ beforeEach(async function () {
 });
 ```
 
-#### explicacion:
+#### explanation:
 
-- Se obtienen tres cuentas de prueba: owner , user1 y user2
-- Se despliegan dos tokens ERC20 de prueba ( tokenA y tokenB ) utilizando el contrato TestERC20
-- Se despliega el contrato SimpleSwap con las direcciones de los tokens
-- Se transfieren tokens a los usuarios de prueba para que puedan interactuar con el contrato
-- Se establece un deadline para las transacciones
-  (1 hora en el futuro)
+- Three test accounts are obtained: owner, user1, and user2
+- Two test ERC20 tokens (tokenA and tokenB) are deployed using the TestERC20 contract
+- The SimpleSwap contract is deployed with the token addresses
+- Tokens are transferred to test users so they can interact with the contract
+- A deadline is set for transactions (1 hour in the future)
 
-### 2. Pruebas de Despliegue (Deployment)
+#### 2. Deployment Tests
 
 ```javascript
 describe("Deployment", function () {
-  it("Debería establecer los tokens correctamente", async function () {
+  it("This should set the tokens correctly.", async function () {
     const tokenAAddress = await simpleSwap.tokenA();
     const tokenBAddress = await simpleSwap.tokenB();
 
@@ -94,23 +93,23 @@ describe("Deployment", function () {
 });
 ```
 
-#### explicacion:
+#### explanation:
 
-- Verifica que los tokens se hayan establecido correctamente en el contrato
-- Comprueba que el orden de los tokens siga la regla de "dirección menor primero" implementada en el constructor
+- Verifies that the tokens have been set correctly in the contract
+- Checks that the token order follows the "lower address first" rule implemented in the constructor
 
-### 3. Pruebas de Agregar Liquidez
+#### 3. Add Liquidity Tests
 
 ```javascript
-it("Debería agregar liquidez inicial correctamente", async function () {
+it("This should add initial liquidity correctly.", async function () {
   const amountA = ethers.parseEther("100");
   const amountB = ethers.parseEther("200");
 
-  // Aprobar tokens para el contrato
+  // Approve tokens for the contract
   await tokenA.connect(user1).approve(await simpleSwap.getAddress(), amountA);
   await tokenB.connect(user1).approve(await simpleSwap.getAddress(), amountB);
 
-  // Agregar liquidez
+  // Add liquidity
   const tx = await simpleSwap
     .connect(user1)
     .addLiquidity(
@@ -124,7 +123,7 @@ it("Debería agregar liquidez inicial correctamente", async function () {
       deadline
     );
 
-  // Verificar evento emitido
+  // Verify emitted event
   const receipt = await tx.wait();
   const event = receipt.logs.find((log) => {
     try {
@@ -135,7 +134,7 @@ it("Debería agregar liquidez inicial correctamente", async function () {
   });
   expect(event).to.not.be.undefined;
 
-  // Verificar balances
+  // Verify balances
   const [reserveA, reserveB] = await simpleSwap.getReserves(
     await tokenA.getAddress(),
     await tokenB.getAddress()
@@ -143,26 +142,26 @@ it("Debería agregar liquidez inicial correctamente", async function () {
   expect(reserveA).to.equal(amountA);
   expect(reserveB).to.equal(amountB);
 
-  // Verificar tokens de liquidez
+  // Verify liquidity tokens
   const liquidityBalance = await simpleSwap.balanceOf(user1.address);
   expect(liquidityBalance).to.be.gt(0);
 });
 ```
 
-#### explicacion:
+#### explanation:
 
-- Define cantidades de tokens para agregar como liquidez inicial
-- Aprueba el gasto de tokens por parte del contrato SimpleSwap
-- Llama a la función addLiquidity para agregar liquidez
-- Verifica que se emita el evento LiquidityAdded
-- Comprueba que las reservas del contrato se actualicen correctamente
-- Verifica que se hayan emitido tokens de liquidez al usuario
+- Defines token amounts to add as initial liquidity
+- Approves token spending by the SimpleSwap contract
+- Calls the addLiquidity function to add liquidity
+- Verifies that the LiquidityAdded event is emitted
+- Checks that the contract's reserves are updated correctly
+- Verifies that liquidity tokens are issued to the user
 
-### 3.2 Agregar Liquidez Adicional
+#### 3.2 Add Additional Liquidity
 
 ```javascript
-it("Debería agregar liquidez adicional proporcionalmente", async function () {
-  // Primero agregar liquidez inicial
+it("This should add additional liquidity proportionally", async function () {
+  // First add initial liquidity
   const initialAmountA = ethers.parseEther("100");
   const initialAmountB = ethers.parseEther("200");
 
@@ -186,9 +185,9 @@ it("Debería agregar liquidez adicional proporcionalmente", async function () {
       deadline
     );
 
-  // Luego agregar más liquidez con user2
-  const additionalAmountA = ethers.parseEther("50"); // La mitad de la liquidez inicial de A
-  const additionalAmountB = ethers.parseEther("100"); // La mitad de la liquidez inicial de B
+  // Then add more liquidity with user2
+  const additionalAmountA = ethers.parseEther("50"); // Half of initial liquidity of A
+  const additionalAmountB = ethers.parseEther("100"); // Half of initial liquidity of B
 
   await tokenA
     .connect(user2)
@@ -210,7 +209,7 @@ it("Debería agregar liquidez adicional proporcionalmente", async function () {
       deadline
     );
 
-  // Verificar reservas actualizadas
+  // Verify updated reserves
   const [reserveA, reserveB] = await simpleSwap.getReserves(
     await tokenA.getAddress(),
     await tokenB.getAddress()
@@ -218,24 +217,24 @@ it("Debería agregar liquidez adicional proporcionalmente", async function () {
   expect(reserveA).to.equal(initialAmountA + additionalAmountA);
   expect(reserveB).to.equal(initialAmountB + additionalAmountB);
 
-  // Verificar tokens de liquidez para user2
+  // Verify liquidity tokens for user2
   const liquidityBalance = await simpleSwap.balanceOf(user2.address);
   expect(liquidityBalance).to.be.gt(0);
 });
 ```
 
-#### explicacion:
+#### explanation:
 
-- Primero agrega liquidez inicial con user1
-- Luego agrega liquidez adicional con user2 manteniendo la misma proporción (1:2)
-- Verifica que las reservas se actualicen correctamente sumando ambas contribuciones
-- Comprueba que user2 reciba tokens de liquidez
+- First adds initial liquidity with user1
+- Then adds additional liquidity with user2 maintaining the same ratio (1:2)
+- Verifies that reserves are updated correctly by adding both contributions
+- Checks that user2 receives liquidity tokens
 
-### 4. Pruebas de Remover Liquidez
+#### 4. Remove Liquidity Tests
 
 ```javascript
-it("Debería remover liquidez correctamente", async function () {
-  // Primero agregar liquidez
+it("Should remove liquidity correctly", async function () {
+  // First add liquidity
   const amountA = ethers.parseEther("100");
   const amountB = ethers.parseEther("200");
 
@@ -255,19 +254,19 @@ it("Debería remover liquidez correctamente", async function () {
       deadline
     );
 
-  // Obtener balance de liquidez
+  // Get liquidity balance
   const liquidityBalance = await simpleSwap.balanceOf(user1.address);
 
-  // Aprobar tokens de liquidez para quemar
+  // Approve liquidity tokens for burning
   await simpleSwap
     .connect(user1)
     .approve(await simpleSwap.getAddress(), liquidityBalance);
 
-  // Balances iniciales de tokens
+  // Initial token balances
   const initialTokenABalance = await tokenA.balanceOf(user1.address);
   const initialTokenBBalance = await tokenB.balanceOf(user1.address);
 
-  // Remover toda la liquidez
+  // Remove all liquidity
   await simpleSwap
     .connect(user1)
     .removeLiquidity(
@@ -280,14 +279,14 @@ it("Debería remover liquidez correctamente", async function () {
       deadline
     );
 
-  // Verificar que los tokens se hayan devuelto
+  // Verify that tokens have been returned
   const finalTokenABalance = await tokenA.balanceOf(user1.address);
   const finalTokenBBalance = await tokenB.balanceOf(user1.address);
 
   expect(finalTokenABalance).to.be.gt(initialTokenABalance);
   expect(finalTokenBBalance).to.be.gt(initialTokenBBalance);
 
-  // Verificar que las reservas estén vacías
+  // Verify that reserves are empty
   const [reserveA, reserveB] = await simpleSwap.getReserves(
     await tokenA.getAddress(),
     await tokenB.getAddress()
@@ -297,23 +296,23 @@ it("Debería remover liquidez correctamente", async function () {
 });
 ```
 
-#### explicacion:
+#### explanation:
 
-- Primero agrega liquidez al contrato
-- Obtiene el balance de tokens de liquidez del usuario
-- Aprueba el gasto de tokens de liquidez por parte del contrato
-- Registra los balances iniciales de tokens
-- Llama a la función removeLiquidity para retirar toda la liquidez
-- Verifica que los tokens se hayan devuelto al usuario
-- Comprueba que las reservas del contrato estén vacías
+- First adds liquidity to the contract
+- Gets the user's liquidity token balance
+- Approves spending of liquidity tokens by the contract
+- Records initial token balances
+- Calls the removeLiquidity function to withdraw all liquidity
+- Verifies that tokens have been returned to the user
+- Checks that the contract's reserves are empty
 
-### 5. Pruebas de Swap de Tokens
+#### 5. Token Swap Tests
 
-### 5.1 Configuración para Swaps
+### 5.1 Setup for Swaps
 
 ```javascript
 beforeEach(async function () {
-  // Agregar liquidez para permitir swaps
+  // Add liquidity to allow swaps
   const amountA = ethers.parseEther("1000");
   const amountB = ethers.parseEther("1000");
 
@@ -333,19 +332,19 @@ beforeEach(async function () {
 });
 ```
 
-#### explicacion:
+#### explanation:
 
-- Agrega liquidez inicial al contrato para permitir operaciones de swap
-- Utiliza cantidades grandes (1000 ETH de cada token) para minimizar el impacto de los swaps en las pruebas
+- Adds initial liquidity to the contract to enable swap operations
+- Uses large amounts (1000 ETH of each token) to minimize the impact of swaps in tests
 
-### 5.2 Swap de Token A por Token B
+#### 5.2 Swap Token A for Token B
 
 ```javascript
-it("Debería intercambiar tokens A por tokens B", async function () {
+it("Should swap token A for token B", async function () {
   const amountIn = ethers.parseEther("10");
   const path = [await tokenA.getAddress(), await tokenB.getAddress()];
 
-  // Calcular cantidad esperada de salida
+  // Calculate expected output amount
   const [reserveA, reserveB] = await simpleSwap.getReserves(
     await tokenA.getAddress(),
     await tokenB.getAddress()
@@ -356,23 +355,23 @@ it("Debería intercambiar tokens A por tokens B", async function () {
     reserveB
   );
 
-  // Aprobar tokens para el swap
+  // Approve tokens for swap
   await tokenA.connect(user1).approve(await simpleSwap.getAddress(), amountIn);
 
-  // Balances iniciales
+  // Initial balances
   const initialTokenABalance = await tokenA.balanceOf(user1.address);
   const initialTokenBBalance = await tokenB.balanceOf(user1.address);
 
-  // Ejecutar swap
+  // Execute swap
   await simpleSwap.connect(user1).swapExactTokensForTokens(
     amountIn,
-    0, // Sin mínimo
+    0, // No minimum
     path,
     user1.address,
     deadline
   );
 
-  // Verificar balances finales
+  // Verify final balances
   const finalTokenABalance = await tokenA.balanceOf(user1.address);
   const finalTokenBBalance = await tokenB.balanceOf(user1.address);
 
@@ -381,23 +380,23 @@ it("Debería intercambiar tokens A por tokens B", async function () {
 });
 ```
 
-#### explicacion:
+#### explanation:
 
-- Define la cantidad de tokens A a intercambiar y la ruta del swap
-- Calcula la cantidad esperada de tokens B a recibir usando la función getAmountOut
-- Aprueba el gasto de tokens A por parte del contrato
-- Registra los balances iniciales de tokens
-- Ejecuta el swap llamando a swapExactTokensForTokens
-- Verifica que los balances finales reflejen correctamente el intercambio
+- Defines the amount of token A to swap and the swap path
+- Calculates the expected amount of token B to receive using the getAmountOut function
+- Approves spending of token A by the contract
+- Records initial token balances
+- Executes the swap by calling swapExactTokensForTokens
+- Verifies that final balances correctly reflect the exchange
 
-### 5.3 Swap de Token B por Token A
+#### 5.3 Swap Token B for Token A
 
 ```javascript
-it("Debería intercambiar tokens B por tokens A", async function () {
+it("Should swap token B for token A", async function () {
   const amountIn = ethers.parseEther("10");
   const path = [await tokenB.getAddress(), await tokenA.getAddress()];
 
-  // Calcular cantidad esperada de salida
+  // Calculate expected output amount
   const [reserveB, reserveA] = await simpleSwap.getReserves(
     await tokenB.getAddress(),
     await tokenA.getAddress()
@@ -408,23 +407,23 @@ it("Debería intercambiar tokens B por tokens A", async function () {
     reserveA
   );
 
-  // Aprobar tokens para el swap
+  // Approve tokens for swap
   await tokenB.connect(user1).approve(await simpleSwap.getAddress(), amountIn);
 
-  // Balances iniciales
+  // Initial balances
   const initialTokenABalance = await tokenA.balanceOf(user1.address);
   const initialTokenBBalance = await tokenB.balanceOf(user1.address);
 
-  // Ejecutar swap
+  // Execute swap
   await simpleSwap.connect(user1).swapExactTokensForTokens(
     amountIn,
-    0, // Sin mínimo
+    0, // No minimum
     path,
     user1.address,
     deadline
   );
 
-  // Verificar balances finales
+  // Verify final balances
   const finalTokenABalance = await tokenA.balanceOf(user1.address);
   const finalTokenBBalance = await tokenB.balanceOf(user1.address);
 
@@ -433,18 +432,18 @@ it("Debería intercambiar tokens B por tokens A", async function () {
 });
 ```
 
-#### explicacion:
+#### explanation:
 
-- Similar al test anterior pero intercambiando tokens B por tokens A
-- Verifica que el swap funcione en ambas direcciones
+- Similar to the previous test but swapping token B for token A
+- Verifies that the swap works in both directions
 
-### 6. Pruebas de Funciones de Vista
+#### 6. View Functions Tests
 
-### 6.1 Configuración para Funciones de Vista
+#### 6.1 Setup for View Functions
 
 ```javascript
 beforeEach(async function () {
-  // Agregar liquidez para probar funciones de vista
+  // Add liquidity to test view functions
   const amountA = ethers.parseEther("100");
   const amountB = ethers.parseEther("200");
 
@@ -464,33 +463,33 @@ beforeEach(async function () {
 });
 ```
 
-#### explicacion:
+#### explanation:
 
-- Agrega liquidez con una proporción específica (1:2) para probar las funciones de vista
+- Adds liquidity with a specific ratio (1:2) to test view functions
 
-### 6.2 Prueba de getPrice
+#### 6.2 getPrice Test
 
 ```javascript
-it("Debería obtener el precio correcto", async function () {
+it("Should get the correct price", async function () {
   const price = await simpleSwap.getPrice(
     await tokenA.getAddress(),
     await tokenB.getAddress()
   );
 
-  // El precio debería ser 2 (con 18 decimales) ya que tenemos 200 B por 100 A
+  // Price should be 2 (with 18 decimals) since we have 200 B for 100 A
   expect(price).to.equal(ethers.parseEther("2"));
 });
 ```
 
-#### explicacion:
+#### explanation:
 
-- Llama a la función getPrice para obtener el precio de tokenA en términos de tokenB
-- Verifica que el precio sea 2 (con 18 decimales) ya que hay 200 tokens B por 100 tokens A
+- Calls the getPrice function to get the price of tokenA in terms of tokenB
+- Verifies that the price is 2 (with 18 decimals) since there are 200 tokens B for 100 tokens A
 
-### 6.3 Prueba de getAmountOut
+#### 6.3 getAmountOut Test
 
 ```javascript
-it("Debería calcular correctamente la cantidad de salida", async function () {
+it("Should calculate output amount correctly", async function () {
   const amountIn = ethers.parseEther("10");
   const [reserveA, reserveB] = await simpleSwap.getReserves(
     await tokenA.getAddress(),
@@ -499,7 +498,7 @@ it("Debería calcular correctamente la cantidad de salida", async function () {
 
   const amountOut = await simpleSwap.getAmountOut(amountIn, reserveA, reserveB);
 
-  // Verificar cálculo manual
+  // Verify manual calculation
   const numerator = amountIn * reserveB;
   const denominator = reserveA + amountIn;
   const expectedAmountOut = numerator / denominator;
@@ -508,58 +507,59 @@ it("Debería calcular correctamente la cantidad de salida", async function () {
 });
 ```
 
-#### explicacion:
+#### explanation:
 
-- Llama a la función getAmountOut para calcular la cantidad de tokens B a recibir
-- Realiza el mismo cálculo manualmente usando la fórmula x\*y=k
-- Verifica que ambos cálculos coincidan
+- Calls the getAmountOut function to calculate the amount of token B to receive
+- Performs the same calculation manually using the x\*y=k formula
+- Verifies that both calculations match
 
-# WEBAPP para SimpleSwap
+## SimpleSwap WebApp
 
-### Características Principales
+- https://eth-kipu-tp4.vercel.app/
 
-- Conexión con Wallet : Integración con MetaMask para gestionar las transacciones y la autenticación del usuario.
-- Intercambio de Tokens : Permite intercambiar entre dos tokens ERC20 predefinidos:
+#### Main Features
+
+- Wallet Connection: Integration with MetaMask for managing transactions and user authentication.
+- Token Exchange: Allows exchange between two predefined ERC20 tokens:
 
   - Token A: `config.js`
   - Token B: `config.js`
 
-- Funcionalidades del Swap :
+#### Swap Functionalities:
 
-  - Visualización de balances de tokens
-  - Cálculo en tiempo real del precio de intercambio
-  - Estimación de la cantidad de tokens a recibir
-  - Visualización de las reservas del pool de liquidez
-  - Swap bidireccional (A→B o B→A)
+- Token balance display
+- Real-time exchange price calculation
+- Estimation of tokens to receive
+- Liquidity pool reserves display
+- Bidirectional swap (A→B or B→A)
 
-### Características Técnicas
+#### Technical Features
 
-- Protección contra Slippage : Implementa un mecanismo de protección estableciendo un mínimo de tokens a recibir (95% del estimado)
-- Gestión de Estado : Utiliza React Hooks para manejar el estado y los efectos secundarios
-- Manejo de Errores : Sistema robusto de manejo de errores y feedback al usuario
-- Actualizaciones en Tiempo Real : Los balances y precios se actualizan automáticamente
+- Slippage Protection: Implements a protection mechanism by setting a minimum of tokens to receive (95% of estimated)
+- State Management: Uses React Hooks to handle state and side effects
+- Error Handling: Robust error handling system and user feedback
+- Real-time Updates: Balances and prices update automatically
 
-### Seguridad
+#### Security
 
-- Verificación de liquidez antes de ejecutar swaps
-- Aprobación de tokens (approve) antes de realizar intercambios
-- Timeout de transacciones (20 minutos)
-- Validación de inputs y estados de la aplicación
+- Liquidity verification before executing swaps
+- Token approval (approve) before exchanges
+- Transaction timeout (20 minutes)
+- Input and application state validation
 
-### Interfaz de Usuario
+#### User Interface
 
-- Interfaz intuitiva para realizar intercambios
-- Botón para invertir la dirección del swap
-- Visualización clara de:
-  - Cuenta conectada
-  - Balances de tokens
-  - Precios actuales
-  - Reservas del pool
-  - Mensajes de éxito/error
+- Intuitive interface for exchanges
+- Button to reverse swap direction
+- Clear display of:
+  - Connected account
+  - Token balances
+  - Current prices
+  - Pool reserves
+  - Success/error messages
 
-### Requisitos
+#### Requirements
 
-- MetaMask instalado en el navegador
-- Tokens ERC20 en la wallet para realizar intercambios
-- Conexión a la red Ethereum (Sepolia testnet)
-  Esta aplicación forma parte de un proyecto más amplio que incluye contratos inteligentes para la gestión del intercambio de tokens en la blockchain de Ethereum.
+- MetaMask installed in the browser
+- ERC20 tokens in the wallet to perform exchanges
+- Connection to Ethereum network (Sepolia testnet)
