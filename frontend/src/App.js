@@ -322,7 +322,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>SimpleSwap Interface</h1>
+        <h1>Ezerom77's SimpleSwap</h1>
 
         {!account ? (
           <button onClick={connectWallet} className="connect-button">
@@ -340,7 +340,7 @@ function App() {
       <main className="swap-container">
         {/* Información de reservas */}
         <div className="reserves-info">
-          <p>Reservas: {parseFloat(reserveA).toFixed(18)} {tokenASymbol} / {parseFloat(reserveB).toFixed(18)} {tokenBSymbol}</p>
+          <p>Reservas del contrato: {parseFloat(reserveA).toFixed(18)} {tokenASymbol} / {parseFloat(reserveB).toFixed(18)} {tokenBSymbol}</p>
           {!hasLiquidity && (
             <p className="warning-message">No hay liquidez en el pool.</p>
           )}

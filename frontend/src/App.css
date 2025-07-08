@@ -204,3 +204,38 @@
   text-align: center;
   font-weight: bold;
 }
+
+/* Eliminar los estilos para la sección de minteo */
+.mint-section {
+  background-color: #f5f5f5;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+}
+
+.mint-section h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.mint-section ol {
+  text-align: left;
+  padding-left: 20px;
+}
+
+.mint-commands {
+  background-color: #333;
+  color: #fff;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+  text-align: left;
+}
+
+.mint-commands pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 0.9em;
+}
