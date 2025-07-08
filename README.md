@@ -31,10 +31,10 @@ The `SimpleSwap.test.js` file contains tests to verify the correct functioning o
 
 ```javascript
 beforeEach(async function () {
-  // Obtener cuentas para pruebas
+  // Get accounts for testing
   [owner, user1, user2] = await ethers.getSigners();
 
-  // Desplegar tokens ERC20 de prueba
+  // Deploy test ERC20 tokens
   const TokenFactory = await ethers.getContractFactory("TestERC20");
   tokenA = await TokenFactory.deploy(
     "Token A",
@@ -47,21 +47,21 @@ beforeEach(async function () {
     ethers.parseEther("1000000")
   );
 
-  // Desplegar contrato SimpleSwap
+  // Deploy SimpleSwap contract
   SimpleSwap = await ethers.getContractFactory("SimpleSwap");
   simpleSwap = await SimpleSwap.deploy(
     await tokenA.getAddress(),
     await tokenB.getAddress()
   );
 
-  // Transferir tokens a usuarios de prueba
+  // Transfer tokens to test users
   await tokenA.transfer(user1.address, ethers.parseEther("10000"));
   await tokenB.transfer(user1.address, ethers.parseEther("10000"));
   await tokenA.transfer(user2.address, ethers.parseEther("10000"));
   await tokenB.transfer(user2.address, ethers.parseEther("10000"));
 
-  // Establecer deadline para transacciones
-  deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hora en el futuro
+  // Set deadline for transactions
+  deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour in the future
 });
 ```
 
@@ -81,7 +81,7 @@ describe("Deployment", function () {
     const tokenAAddress = await simpleSwap.tokenA();
     const tokenBAddress = await simpleSwap.tokenB();
 
-    // Verificar que los tokens se hayan establecido en el orden correcto (menor dirección primero)
+    // Verify that tokens have been set in the correct order (lower address first)
     if ((await tokenA.getAddress()) < (await tokenB.getAddress())) {
       expect(tokenAAddress).to.equal(await tokenA.getAddress());
       expect(tokenBAddress).to.equal(await tokenB.getAddress());
