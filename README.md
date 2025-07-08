@@ -1,5 +1,7 @@
 # eth-kipu-tp4
 
+- Este repositorio contiene el TP4, segun las indicaciones del curso en donde se incluye ademas, una version del contrato de SimpleSwap con el feedback recibido en la correción del ultimo TP
+
 ## URL de despliegue
 
 - https://eth-kipu-tp4.vercel.app/
@@ -8,9 +10,11 @@
 
 - https://github.com/Ezerom77/eth-kipu-tp4
 
-## Contract addresses : 0xD6324221906efCf1775a7484F5f7cA7b5fd32Bd9 (sepolia)
+## Informacion relevante
 
-## Token addresses :
+- Contract addresses : 0xD6324221906efCf1775a7484F5f7cA7b5fd32Bd9 (sepolia)
+
+#### Token addresses :
 
 - Token A: 0xF793f2189Fab2a9580D57592ffF335703dc9Ea59
 - Token B: 0x67C180f58081F4a9f588Cf9a930e70f0E036bEC3
@@ -509,3 +513,53 @@ it("Debería calcular correctamente la cantidad de salida", async function () {
 - Llama a la función getAmountOut para calcular la cantidad de tokens B a recibir
 - Realiza el mismo cálculo manualmente usando la fórmula x\*y=k
 - Verifica que ambos cálculos coincidan
+
+# WEBAPP para SimpleSwap
+
+### Características Principales
+
+- Conexión con Wallet : Integración con MetaMask para gestionar las transacciones y la autenticación del usuario.
+- Intercambio de Tokens : Permite intercambiar entre dos tokens ERC20 predefinidos:
+
+  - Token A: `config.js`
+  - Token B: `config.js`
+
+- Funcionalidades del Swap :
+
+  - Visualización de balances de tokens
+  - Cálculo en tiempo real del precio de intercambio
+  - Estimación de la cantidad de tokens a recibir
+  - Visualización de las reservas del pool de liquidez
+  - Swap bidireccional (A→B o B→A)
+
+### Características Técnicas
+
+- Protección contra Slippage : Implementa un mecanismo de protección estableciendo un mínimo de tokens a recibir (95% del estimado)
+- Gestión de Estado : Utiliza React Hooks para manejar el estado y los efectos secundarios
+- Manejo de Errores : Sistema robusto de manejo de errores y feedback al usuario
+- Actualizaciones en Tiempo Real : Los balances y precios se actualizan automáticamente
+
+### Seguridad
+
+- Verificación de liquidez antes de ejecutar swaps
+- Aprobación de tokens (approve) antes de realizar intercambios
+- Timeout de transacciones (20 minutos)
+- Validación de inputs y estados de la aplicación
+
+### Interfaz de Usuario
+
+- Interfaz intuitiva para realizar intercambios
+- Botón para invertir la dirección del swap
+- Visualización clara de:
+  - Cuenta conectada
+  - Balances de tokens
+  - Precios actuales
+  - Reservas del pool
+  - Mensajes de éxito/error
+
+### Requisitos
+
+- MetaMask instalado en el navegador
+- Tokens ERC20 en la wallet para realizar intercambios
+- Conexión a la red Ethereum (Sepolia testnet)
+  Esta aplicación forma parte de un proyecto más amplio que incluye contratos inteligentes para la gestión del intercambio de tokens en la blockchain de Ethereum.

@@ -11,27 +11,36 @@ import {
 import './App.css';
 
 function App() {
-  const [account, setAccount] = useState('');
-  const [signer, setSigner] = useState(null);
-  const [simpleSwap, setSimpleSwap] = useState(null);
-  const [tokenA, setTokenA] = useState(null);
-  const [tokenB, setTokenB] = useState(null);
-  const [tokenASymbol, setTokenASymbol] = useState('');
-  const [tokenBSymbol, setTokenBSymbol] = useState('');
-  const [tokenABalance, setTokenABalance] = useState('0');
-  const [tokenBBalance, setTokenBBalance] = useState('0');
-  const [amountIn, setAmountIn] = useState('');
-  const [estimatedOutput, setEstimatedOutput] = useState('0');
-  const [swapDirection, setSwapDirection] = useState('AtoB'); // 'AtoB' or 'BtoA'
-  const [price, setPrice] = useState('0');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(''); // Estado para mensajes de éxito
-  const [reserveA, setReserveA] = useState('0');
-  const [reserveB, setReserveB] = useState('0');
-  const [hasLiquidity, setHasLiquidity] = useState(false);
+  // States to manage wallet connection and contracts
+  const [account, setAccount] = useState(''); // Connected wallet address
+  const [signer, setSigner] = useState(null); // Signer object for signing transactions
+  const [simpleSwap, setSimpleSwap] = useState(null); // Swap contract
+  const [tokenA, setTokenA] = useState(null); // Token A contract
+  const [tokenB, setTokenB] = useState(null); // Token B contract
 
-  // Definir la función updateBalances con useCallback
+  // States for token information
+  const [tokenASymbol, setTokenASymbol] = useState(''); // Token A symbol
+  const [tokenBSymbol, setTokenBSymbol] = useState(''); // Token B symbol
+  const [tokenABalance, setTokenABalance] = useState('0'); // Token A balance
+  const [tokenBBalance, setTokenBBalance] = useState('0'); // Token B balance
+
+  // States for swap operation
+  const [amountIn, setAmountIn] = useState(''); // Amount of tokens to swap
+  const [estimatedOutput, setEstimatedOutput] = useState('0'); // Estimated amount to receive
+  const [swapDirection, setSwapDirection] = useState('AtoB'); // Swap direction (A->B or B->A)
+  const [price, setPrice] = useState('0'); // Current exchange price
+
+  // States for UI and user feedback
+  const [loading, setLoading] = useState(false); // Loading indicator
+  const [error, setError] = useState(''); // Error messages
+  const [success, setSuccess] = useState(''); // Success messages
+
+  // States for pool information
+  const [reserveA, setReserveA] = useState('0'); // Token A reserve in the pool
+  const [reserveB, setReserveB] = useState('0'); // Token B reserve in the pool
+  const [hasLiquidity, setHasLiquidity] = useState(false); // Liquidity indicator
+
+  // Define updateBalances function with useCallback
   const updateBalances = useCallback(async (userAccount) => {
     try {
       if (!tokenA || !tokenB || !userAccount) return;
@@ -49,7 +58,7 @@ function App() {
     }
   }, [tokenA, tokenB]);
 
-  // Definir la función checkReserves con useCallback
+  // Define checkReserves function with useCallback
   const checkReserves = useCallback(async () => {
     try {
       if (!simpleSwap || !tokenA || !tokenB) return;
@@ -61,14 +70,14 @@ function App() {
       setReserveA(ethers.formatUnits(resA, decimalsA));
       setReserveB(ethers.formatUnits(resB, decimalsB));
 
-      // Verificar si hay liquidez
+      // Check liquidity
       setHasLiquidity(resA > 0 && resB > 0);
     } catch (err) {
       console.error('Error al obtener reservas:', err);
     }
   }, [simpleSwap, tokenA, tokenB]);
 
-  // Definir la función updatePrice con useCallback
+  // Define updatePrice function with useCallback
   const updatePrice = useCallback(async () => {
     try {
       if (!simpleSwap) return;
@@ -84,7 +93,7 @@ function App() {
     }
   }, [simpleSwap, swapDirection]);
 
-  // Definir handleAccountsChanged con useCallback
+  // Define handleAccountsChanged with useCallback
   const handleAccountsChanged = useCallback(async (accounts) => {
     if (accounts.length === 0) {
       setAccount('');
@@ -97,14 +106,14 @@ function App() {
       const signerInstance = await ethersProvider.getSigner();
       setSigner(signerInstance);
 
-      // Solo actualizar balances si los tokens están definidos
+      // Only update balances if tokens are defined
       if (tokenA && tokenB) {
         await updateBalances(accounts[0]);
       }
     }
   }, [tokenA, tokenB, updateBalances]);
 
-  // Definir la función connectWallet con useCallback
+  // Define connectWallet function with useCallback
   const connectWallet = useCallback(async () => {
     try {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -115,7 +124,7 @@ function App() {
     }
   }, [handleAccountsChanged]);
 
-  // Definir estimateOutput con useCallback
+  // Define estimateOutput with useCallback
   const estimateOutput = useCallback(async () => {
     if (!amountIn || parseFloat(amountIn) === 0 || !simpleSwap) {
       setEstimatedOutput('0');
@@ -123,26 +132,26 @@ function App() {
     }
 
     try {
-      // Obtener reservas
+      // Get reserves
       const [reserveA, reserveB] = await simpleSwap.getReserves(
         swapDirection === 'AtoB' ? TOKEN_A_ADDRESS : TOKEN_B_ADDRESS,
         swapDirection === 'AtoB' ? TOKEN_B_ADDRESS : TOKEN_A_ADDRESS
       );
 
-      // Verificar si hay liquidez
+      // Check for liquidity
       if (reserveA.toString() === '0' || reserveB.toString() === '0') {
         setError('No hay liquidez suficiente en el pool.');
         setEstimatedOutput('0');
         return;
       }
 
-      // Obtener decimales
+      // Get decimals
       const decimalsIn = await (swapDirection === 'AtoB' ? tokenA : tokenB).decimals();
       const decimalsOut = await (swapDirection === 'AtoB' ? tokenB : tokenA).decimals();
 
       const amountInWei = ethers.parseUnits(amountIn, decimalsIn);
 
-      // Calcular salida estimada
+      // Calculate estimated output
       const amountOutWei = await simpleSwap.getAmountOut(
         amountInWei,
         swapDirection === 'AtoB' ? reserveA : reserveB,
@@ -158,23 +167,23 @@ function App() {
     }
   }, [amountIn, simpleSwap, swapDirection, tokenA, tokenB]);
 
-  // Memoizar handleSwapDirectionToggle con useCallback
+  // Memoize handleSwapDirectionToggle with useCallback
   const handleSwapDirectionToggle = useCallback(() => {
     setSwapDirection(prev => prev === 'AtoB' ? 'BtoA' : 'AtoB');
     setAmountIn('');
     setEstimatedOutput('0');
   }, []);
 
-  // Memoizar executeSwap con useCallback
+  // Memoize executeSwap with useCallback
   const executeSwap = useCallback(async () => {
     if (!signer || !amountIn || parseFloat(amountIn) === 0) return;
 
     setLoading(true);
     setError('');
-    setSuccess(''); // Limpiar mensaje de éxito anterior
+    setSuccess(''); // Clear previous success message
 
     try {
-      // Verificar si hay liquidez antes de ejecutar el swap
+      // Check for liquidity before executing the swap
       const [resA, resB] = await simpleSwap.getReserves(TOKEN_A_ADDRESS, TOKEN_B_ADDRESS);
       if (resA.toString() === '0' || resB.toString() === '0') {
         throw new Error('No hay liquidez suficiente en el pool.');
@@ -187,22 +196,22 @@ function App() {
 
       const amountInWei = ethers.parseUnits(amountIn, decimalsIn);
 
-      // Aprobar el gasto de tokens
+      // Approve token spending
       const approvalTx = await tokenInContract.connect(signer).approve(SIMPLE_SWAP_ADDRESS, amountInWei);
       await approvalTx.wait();
 
-      // Preparar parámetros para el swap
+      // Prepare parameters for the swap
       const path = [tokenInAddress, tokenOutAddress];
       const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutos
 
-      // Calcular un amountOutMin razonable (95% del estimado)
+      // Calculate a reasonable amountOutMin (95% of the estimate)
       const [reserveIn, reserveOut] = await simpleSwap.getReserves(tokenInAddress, tokenOutAddress);
       const amountOutWei = await simpleSwap.getAmountOut(amountInWei, reserveIn, reserveOut);
 
-      // Corrección: Usar operaciones BigInt correctamente
+      // Correction: Use BigInt operations correctly
       const amountOutMin = amountOutWei * 95n / 100n;
 
-      // Ejecutar swap
+      // run swap
       const swapTx = await simpleSwap.connect(signer).swapExactTokensForTokens(
         amountInWei,
         amountOutMin,
@@ -213,13 +222,13 @@ function App() {
 
       await swapTx.wait();
 
-      // Actualizar balances y limpiar campos
+      // Update balances and clear fields
       await updateBalances(account);
       await checkReserves();
       setAmountIn('');
       setEstimatedOutput('0');
 
-      // Mostrar mensaje de éxito
+      // Show Success msg
       const tokenInSymbol = swapDirection === 'AtoB' ? tokenASymbol : tokenBSymbol;
       const tokenOutSymbol = swapDirection === 'AtoB' ? tokenBSymbol : tokenASymbol;
       setSuccess(`¡Intercambio exitoso! Has cambiado ${amountIn} ${tokenInSymbol} por ${ethers.formatUnits(amountOutWei, await (swapDirection === 'AtoB' ? tokenB : tokenA).decimals())} ${tokenOutSymbol}`);
@@ -232,7 +241,7 @@ function App() {
     }
   }, [signer, amountIn, simpleSwap, swapDirection, tokenA, tokenB, account, updateBalances, checkReserves, tokenASymbol, tokenBSymbol]);
 
-  // Inicialización de la aplicación - Separada en su propio useEffect
+  // Application Initialization - Separated into its own useEffect
   useEffect(() => {
     const init = async () => {
       try {
@@ -241,7 +250,7 @@ function App() {
         if (ethereumProvider) {
           const ethersProvider = new ethers.BrowserProvider(window.ethereum);
 
-          // Inicializar contratos
+          // Initialize contracts
           const simpleSwapContract = new ethers.Contract(
             SIMPLE_SWAP_ADDRESS,
             SIMPLE_SWAP_ABI,
@@ -263,7 +272,7 @@ function App() {
           );
           setTokenB(tokenBContract);
 
-          // Obtener símbolos de tokens
+          // Get token symbol
           const symbolA = await tokenAContract.symbol();
           const symbolB = await tokenBContract.symbol();
           setTokenASymbol(symbolA);
@@ -278,14 +287,14 @@ function App() {
     };
 
     init();
-  }, []); // Sin dependencias para que solo se ejecute una vez
+  }, []); // without dependencies to ensure it runs once
 
-  // Configurar event listeners para MetaMask - Separado en su propio useEffect
+  // Effect for MetaMask - Separado en su propio useEffect
   useEffect(() => {
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', handleAccountsChanged);
 
-      // Verificar si ya hay una cuenta conectada
+      // Chechk connected Account
       const checkAccounts = async () => {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         if (accounts.length > 0) {
@@ -301,7 +310,7 @@ function App() {
     }
   }, [handleAccountsChanged]);
 
-  // Efecto para actualizar precio y reservas cuando cambia simpleSwap o swapDirection
+  // Efect to update price an reserves wuen simpleSwap ot swapDirection change
   useEffect(() => {
     if (simpleSwap) {
       const updateData = async () => {
@@ -312,7 +321,7 @@ function App() {
     }
   }, [simpleSwap, swapDirection, updatePrice, checkReserves]);
 
-  // Efecto para estimar output cuando cambia amountIn
+  // Effect to Output estimation when amountIn change
   useEffect(() => {
     if (simpleSwap && amountIn) {
       estimateOutput();
@@ -338,7 +347,7 @@ function App() {
       </header>
 
       <main className="swap-container">
-        {/* Información de reservas */}
+        {/* Reserves information */}
         <div className="reserves-info">
           <p>Reservas del contrato: {parseFloat(reserveA).toFixed(18)} {tokenASymbol} / {parseFloat(reserveB).toFixed(18)} {tokenBSymbol}</p>
           {!hasLiquidity && (
@@ -346,7 +355,7 @@ function App() {
           )}
         </div>
 
-        {/* Sección de Swap */}
+        {/* Swap section */}
         <>
           <div className="price-display">
             <p>Precio: 1 {swapDirection === 'AtoB' ? tokenASymbol : tokenBSymbol} = {parseFloat(price).toFixed(6)} {swapDirection === 'AtoB' ? tokenBSymbol : tokenASymbol}</p>
