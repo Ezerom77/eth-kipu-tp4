@@ -231,70 +231,98 @@ describe("SimpleSwap", function () {
       const amountIn = ethers.parseEther("10");
       const path = [await tokenA.getAddress(), await tokenB.getAddress()];
 
-      // Calculate expected output amount
-      const [reserveA, reserveB] = await simpleSwap.getReserves(
+      // Obtener reservas antes del swap
+      const [initialReserveA, initialReserveB] = await simpleSwap.getReserves(
         await tokenA.getAddress(),
         await tokenB.getAddress()
       );
-      const expectedAmountOut = await simpleSwap.getAmountOut(amountIn, reserveA, reserveB);
 
-      // Approve tokens for swap
+      // Calcular el monto esperado de salida usando las reservas iniciales
+      const expectedAmountOut = await simpleSwap.getAmountOut(
+        amountIn,
+        initialReserveA,
+        initialReserveB
+      );
+
+      // Aprobar tokens para el swap
       await tokenA.connect(user1).approve(await simpleSwap.getAddress(), amountIn);
 
-      // Initial balances
+      // Balances iniciales
       const initialTokenABalance = await tokenA.balanceOf(user1.address);
       const initialTokenBBalance = await tokenB.balanceOf(user1.address);
 
-      // Execute swap
+      // Ejecutar el swap
       await simpleSwap.connect(user1).swapExactTokensForTokens(
         amountIn,
-        0, // No minimum
+        0, // Sin mínimo
         path,
         user1.address,
         deadline
       );
 
-      // Verify final balances
+      // Verificar balances finales
       const finalTokenABalance = await tokenA.balanceOf(user1.address);
       const finalTokenBBalance = await tokenB.balanceOf(user1.address);
 
       expect(initialTokenABalance - finalTokenABalance).to.equal(amountIn);
       expect(finalTokenBBalance - initialTokenBBalance).to.equal(expectedAmountOut);
+
+      // Verificar que las reservas se actualizaron correctamente
+      const [finalReserveA, finalReserveB] = await simpleSwap.getReserves(
+        await tokenA.getAddress(),
+        await tokenB.getAddress()
+      );
+      expect(finalReserveA).to.equal(initialReserveA + amountIn);
+      expect(finalReserveB).to.equal(initialReserveB - expectedAmountOut);
     });
 
     it("Should swap token B for token A", async function () {
       const amountIn = ethers.parseEther("10");
       const path = [await tokenB.getAddress(), await tokenA.getAddress()];
 
-      // Calculate expected output amount
-      const [reserveB, reserveA] = await simpleSwap.getReserves(
+      // Obtener reservas antes del swap
+      const [initialReserveB, initialReserveA] = await simpleSwap.getReserves(
         await tokenB.getAddress(),
         await tokenA.getAddress()
       );
-      const expectedAmountOut = await simpleSwap.getAmountOut(amountIn, reserveB, reserveA);
 
-      // Approve tokens for swap
+      // Calcular el monto esperado de salida usando las reservas iniciales
+      const expectedAmountOut = await simpleSwap.getAmountOut(
+        amountIn,
+        initialReserveB,
+        initialReserveA
+      );
+
+      // Aprobar tokens para el swap
       await tokenB.connect(user1).approve(await simpleSwap.getAddress(), amountIn);
 
-      // Initial balances
+      // Balances iniciales
       const initialTokenABalance = await tokenA.balanceOf(user1.address);
       const initialTokenBBalance = await tokenB.balanceOf(user1.address);
 
-      // Execute swap
+      // Ejecutar el swap
       await simpleSwap.connect(user1).swapExactTokensForTokens(
         amountIn,
-        0, // No minimum
+        0, // Sin mínimo
         path,
         user1.address,
         deadline
       );
 
-      // Verify final balances
+      // Verificar balances finales
       const finalTokenABalance = await tokenA.balanceOf(user1.address);
       const finalTokenBBalance = await tokenB.balanceOf(user1.address);
 
       expect(initialTokenBBalance - finalTokenBBalance).to.equal(amountIn);
       expect(finalTokenABalance - initialTokenABalance).to.equal(expectedAmountOut);
+
+      // Verificar que las reservas se actualizaron correctamente
+      const [finalReserveB, finalReserveA] = await simpleSwap.getReserves(
+        await tokenB.getAddress(),
+        await tokenA.getAddress()
+      );
+      expect(finalReserveB).to.equal(initialReserveB + amountIn);
+      expect(finalReserveA).to.equal(initialReserveA - expectedAmountOut);
     });
   });
 

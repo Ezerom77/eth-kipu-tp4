@@ -7,6 +7,18 @@ const SEPOLIA_PRIVATE_KEY = process.env.PRKEY // pay the gas
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_KEY; // verify the contract
 
 module.exports = {
+  solidity: {
+    version: "0.8.0",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
+  }
+};
+
+module.exports = {
   solidity: "0.8.28",
   networks: {
     sepolia: {

@@ -89,14 +89,16 @@ contract SimpleSwap is ERC20, ISimpleSwap {
             (amountAMin, amountBMin) = (amountBMin, amountAMin);
         }
 
-        // Calculate optimal amounts
-        if (reserveA == 0 && reserveB == 0) {
-            // First deposit for this pair
+        // Almacenar reservas en memoria
+        uint256 _reserveA = reserveA;
+        uint256 _reserveB = reserveB;
+
+        // Calcular optimal amounts
+        if (_reserveA == 0 && _reserveB == 0) {
             amountA = amountADesired;
             amountB = amountBDesired;
         } else {
-            // Existing pair, calculate proportions
-            uint256 amountBOptimal = quote(amountADesired, reserveA, reserveB);
+            uint256 amountBOptimal = quote(amountADesired, _reserveA, _reserveB);
 
             if (amountBOptimal <= amountBDesired) {
                 require(amountBOptimal >= amountBMin, "INSUFFICIENT_B");
@@ -105,8 +107,8 @@ contract SimpleSwap is ERC20, ISimpleSwap {
             } else {
                 uint256 amountAOptimal = quote(
                     amountBDesired,
-                    reserveB,
-                    reserveA
+                    _reserveB,
+                    _reserveA
                 );
                 require(amountAOptimal <= amountADesired, "EXCESSIVE_INPUT");
                 require(amountAOptimal >= amountAMin, "INSUFFICIENT_A");
@@ -174,10 +176,14 @@ contract SimpleSwap is ERC20, ISimpleSwap {
             (amountAMin, amountBMin) = (amountBMin, amountAMin);
         }
 
-        // Calculate amounts to return
-        uint256 totalSupply = totalSupply();
-        amountA = (liquidity * reserveA) / totalSupply;
-        amountB = (liquidity * reserveB) / totalSupply;
+        // Almacenar valores en memoria
+        uint256 _totalSupply = totalSupply();
+        uint256 _reserveA = reserveA;
+        uint256 _reserveB = reserveB;
+
+        // Calcular montos usando variables en memoria
+        amountA = (liquidity * _reserveA) / _totalSupply;
+        amountB = (liquidity * _reserveB) / _totalSupply;
 
         require(amountA >= amountAMin, "INSUFFICIENT_A");
         require(amountB >= amountBMin, "INSUFFICIENT_B");
@@ -211,7 +217,6 @@ contract SimpleSwap is ERC20, ISimpleSwap {
         ensureDeadline(deadline)
         returns (uint256[] memory amounts)
     {
-        // Verify path is valid for this pair
         require(path.length == 2, "INVALID_PATH_LENGTH");
         require(
             (path[0] == tokenA && path[1] == tokenB) ||
@@ -219,21 +224,23 @@ contract SimpleSwap is ERC20, ISimpleSwap {
             "INVALID_PATH"
         );
 
+        bool isTokenAToB = path[0] == tokenA;
+        uint256 _reserveIn;
+        uint256 _reserveOut;
+
+        if (isTokenAToB) {
+            _reserveIn = reserveA;
+            _reserveOut = reserveB;
+        } else {
+            _reserveIn = reserveB;
+            _reserveOut = reserveA;
+        }
+
         amounts = new uint256[](2);
         amounts[0] = amountIn;
+        amounts[1] = getAmountOut(amountIn, _reserveIn, _reserveOut);
 
-        // Determine which token is being swapped
-        bool isTokenAToB = path[0] == tokenA;
-
-        // Get current reserves in correct order
-        uint256 reserveIn = isTokenAToB ? reserveA : reserveB;
-        uint256 reserveOut = isTokenAToB ? reserveB : reserveA;
-
-        // Calculate output amount
-        uint256 amountOut = getAmountOut(amountIn, reserveIn, reserveOut);
-        amounts[1] = amountOut;
-
-        require(amountOut >= amountOutMin, "INSUFFICIENT_OUT");
+        require(amounts[1] >= amountOutMin, "INSUFFICIENT_OUT");
 
         // Transfer input token to contract
         IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
@@ -241,16 +248,16 @@ contract SimpleSwap is ERC20, ISimpleSwap {
         // Update reserves
         if (isTokenAToB) {
             reserveA += amountIn;
-            reserveB -= amountOut;
+            reserveB -= amounts[1];
         } else {
             reserveB += amountIn;
-            reserveA -= amountOut;
+            reserveA -= amounts[1];
         }
 
         // Transfer output token to recipient
-        IERC20(path[1]).transfer(to, amountOut);
+        IERC20(path[1]).transfer(to, amounts[1]);
 
-        emit Swap(path[0], path[1], amountIn, amountOut);
+        emit Swap(path[0], path[1], amountIn, amounts[1]);
 
         return amounts;
     }
@@ -267,13 +274,14 @@ contract SimpleSwap is ERC20, ISimpleSwap {
             "INVALID_PAIR"
         );
 
-        require(reserveA > 0 && reserveB > 0, "NO_LIQUIDITY");
+        uint256 _reserveA = reserveA;
+        uint256 _reserveB = reserveB;
+        require(_reserveA > 0 && _reserveB > 0, "NO_LIQUIDITY");
 
-        // Calculate price based on token order
         if (_tokenA == tokenA) {
-            return (reserveB * 1e18) / reserveA; // Price with 18 decimals
+            return (_reserveB * 1e18) / _reserveA;
         } else {
-            return (reserveA * 1e18) / reserveB; // Price with 18 decimals
+            return (_reserveA * 1e18) / _reserveB;
         }
     }
 
