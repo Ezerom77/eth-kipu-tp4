@@ -120,10 +120,13 @@ contract SimpleSwap is ERC20, ISimpleSwap {
         // Transfer tokens to contract
         IERC20(tokenA).transferFrom(msg.sender, address(this), amountA);
         IERC20(tokenB).transferFrom(msg.sender, address(this), amountB);
+        emit TokenATransfer(msg.sender, address(this), amountA);
+        emit TokenBTransfer(msg.sender, address(this), amountB);
 
         // Update reserves
         reserveA += amountA;
         reserveB += amountB;
+        emit Sync(reserveA, reserveB);
 
         // Calculate liquidity to mint
         uint256 totalSupply = totalSupply();
@@ -244,6 +247,7 @@ contract SimpleSwap is ERC20, ISimpleSwap {
 
         // Transfer input token to contract
         IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
+        emit TokenATransfer(msg.sender, address(this), amountIn);
 
         // Update reserves
         if (isTokenAToB) {
@@ -256,6 +260,7 @@ contract SimpleSwap is ERC20, ISimpleSwap {
 
         // Transfer output token to recipient
         IERC20(path[1]).transfer(to, amounts[1]);
+        emit TokenBTransfer(address(this), to, amounts[1]);
 
         emit Swap(path[0], path[1], amountIn, amounts[1]);
 
@@ -367,4 +372,5 @@ contract SimpleSwap is ERC20, ISimpleSwap {
             z = 1;
         }
     }
+
 }

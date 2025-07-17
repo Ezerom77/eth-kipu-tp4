@@ -45,6 +45,49 @@ interface ISimpleSwap {
         uint256 amountOut
     );
 
+    /// @notice Event emitted when reserves are synchronized
+    /// @param reserveA Current reserve of token A
+    /// @param reserveB Current reserve of token B
+    event Sync(uint256 reserveA, uint256 reserveB);
+
+    /// @notice Event emitted when liquidity tokens are minted
+    /// @param sender Address of the liquidity provider
+    /// @param amountA Amount of token A added
+    /// @param amountB Amount of token B added
+    event Mint(address indexed sender, uint256 amountA, uint256 amountB);
+
+    /// @notice Event emitted when liquidity tokens are burned
+    /// @param sender Address of the liquidity provider
+    /// @param amountA Amount of token A removed
+    /// @param amountB Amount of token B removed
+    /// @param to Address receiving the tokens
+    event Burn(
+        address indexed sender,
+        uint256 amountA,
+        uint256 amountB,
+        address indexed to
+    );
+
+    /// @notice Event emitted when token A is transferred
+    /// @param from Address sending the tokens
+    /// @param to Address receiving the tokens
+    /// @param amount Amount of tokens transferred
+    event TokenATransfer(
+        address indexed from,
+        address indexed to,
+        uint256 amount
+    );
+
+    /// @notice Event emitted when token B is transferred
+    /// @param from Address sending the tokens
+    /// @param to Address receiving the tokens
+    /// @param amount Amount of tokens transferred
+    event TokenBTransfer(
+        address indexed from,
+        address indexed to,
+        uint256 amount
+    );
+
     /// @notice Adds liquidity to a token pair
     /// @dev Transfers tokens from the user to the contract and issues liquidity tokens
     /// @param tokenA Address of the first token
