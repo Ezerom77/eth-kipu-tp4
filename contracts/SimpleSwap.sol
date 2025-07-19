@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.30;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -75,15 +75,19 @@ contract SimpleSwap is ERC20, ISimpleSwap {
         ensureDeadline(deadline)
         returns (uint256 amountA, uint256 amountB, uint256 liquidity)
     {
+        // Create copies in memory of the immutable variables
+        address _tokenAContract = tokenA;
+        address _tokenBContract = tokenB;
+
         // Verify tokens match the pair
         require(
-            (_tokenA == tokenA && _tokenB == tokenB) ||
-                (_tokenA == tokenB && _tokenB == tokenA),
+            (_tokenA == _tokenAContract && _tokenB == _tokenBContract) ||
+                (_tokenA == _tokenBContract && _tokenB == _tokenAContract),
             "INVALID_PAIR"
         );
 
         // Normalize token order and amounts
-        if (_tokenA != tokenA) {
+        if (_tokenA != _tokenAContract) {
             // Swap values if tokens are provided in reverse order
             (amountADesired, amountBDesired) = (amountBDesired, amountADesired);
             (amountAMin, amountBMin) = (amountBMin, amountAMin);
@@ -93,7 +97,7 @@ contract SimpleSwap is ERC20, ISimpleSwap {
         uint256 _reserveA = reserveA;
         uint256 _reserveB = reserveB;
 
-        // Calcular optimal amounts
+        // Calculate optimal amounts
         if (_reserveA == 0 && _reserveB == 0) {
             amountA = amountADesired;
             amountB = amountBDesired;
@@ -118,26 +122,30 @@ contract SimpleSwap is ERC20, ISimpleSwap {
         }
 
         // Transfer tokens to contract
-        IERC20(tokenA).transferFrom(msg.sender, address(this), amountA);
-        IERC20(tokenB).transferFrom(msg.sender, address(this), amountB);
+        IERC20(_tokenAContract).transferFrom(msg.sender, address(this), amountA);
+        IERC20(_tokenBContract).transferFrom(msg.sender, address(this), amountB);
         emit TokenATransfer(msg.sender, address(this), amountA);
         emit TokenBTransfer(msg.sender, address(this), amountB);
 
-        // Update reserves
-        reserveA += amountA;
-        reserveB += amountB;
-        emit Sync(reserveA, reserveB);
+        // Update reserves in memory
+        _reserveA += amountA;
+        _reserveB += amountB;
+
+        // Update state variables
+        reserveA = _reserveA;
+        reserveB = _reserveB;
+        emit Sync(_reserveA, _reserveB);
 
         // Calculate liquidity to mint
-        uint256 totalSupply = totalSupply();
-        if (totalSupply == 0) {
+        uint256 _totalSupply = totalSupply();
+        if (_totalSupply == 0) {
             // First time adding liquidity
             liquidity = sqrt(amountA * amountB);
         } else {
             // Calculate proportional liquidity
             liquidity = min(
-                (amountA * totalSupply) / reserveA,
-                (amountB * totalSupply) / reserveB
+                (amountA * _totalSupply) / _reserveA,
+                (amountB * _totalSupply) / _reserveB
             );
         }
 
@@ -145,8 +153,9 @@ contract SimpleSwap is ERC20, ISimpleSwap {
 
         // Mint liquidity tokens
         _mint(to, liquidity);
+        emit Mint(msg.sender, amountA, amountB);
 
-        emit LiquidityAdded(tokenA, tokenB, amountA, amountB, liquidity);
+        emit LiquidityAdded(_tokenAContract, _tokenBContract, amountA, amountB, liquidity);
 
         return (amountA, amountB, liquidity);
     }
@@ -166,15 +175,19 @@ contract SimpleSwap is ERC20, ISimpleSwap {
         ensureDeadline(deadline)
         returns (uint256 amountA, uint256 amountB)
     {
+        // Create copies in memory of the immutable variables
+        address _tokenAContract = tokenA;
+        address _tokenBContract = tokenB;
+
         // Verify tokens match the pair
         require(
-            (_tokenA == tokenA && _tokenB == tokenB) ||
-                (_tokenA == tokenB && _tokenB == tokenA),
+            (_tokenA == _tokenAContract && _tokenB == _tokenBContract) ||
+                (_tokenA == _tokenBContract && _tokenB == _tokenAContract),
             "INVALID_PAIR"
         );
 
         // Normalize token order and minimum amounts
-        if (_tokenA != tokenA) {
+        if (_tokenA != _tokenAContract) {
             // Swap values if tokens are provided in reverse order
             (amountAMin, amountBMin) = (amountBMin, amountAMin);
         }
@@ -193,16 +206,22 @@ contract SimpleSwap is ERC20, ISimpleSwap {
 
         // Burn liquidity tokens first (effects before interactions)
         _burn(msg.sender, liquidity);
+        emit Burn(msg.sender, amountA, amountB, to);
 
-        // Update reserves
-        reserveA -= amountA;
-        reserveB -= amountB;
+        // Update reserves in memory
+        _reserveA -= amountA;
+        _reserveB -= amountB;
+
+        // Update state variables
+        reserveA = _reserveA;
+        reserveB = _reserveB;
+        emit Sync(_reserveA, _reserveB);
 
         // Transfer tokens to user
-        IERC20(tokenA).transfer(to, amountA);
-        IERC20(tokenB).transfer(to, amountB);
+        IERC20(_tokenAContract).transfer(to, amountA);
+        IERC20(_tokenBContract).transfer(to, amountB);
 
-        emit LiquidityRemoved(tokenA, tokenB, amountA, amountB, liquidity);
+        emit LiquidityRemoved(_tokenAContract, _tokenBContract, amountA, amountB, liquidity);
 
         return (amountA, amountB);
     }
@@ -220,23 +239,32 @@ contract SimpleSwap is ERC20, ISimpleSwap {
         ensureDeadline(deadline)
         returns (uint256[] memory amounts)
     {
+        // Crear copias en memoria de las variables inmutables
+        address _tokenA = tokenA;
+        address _tokenB = tokenB;
+
         require(path.length == 2, "INVALID_PATH_LENGTH");
         require(
-            (path[0] == tokenA && path[1] == tokenB) ||
-                (path[0] == tokenB && path[1] == tokenA),
+            (path[0] == _tokenA && path[1] == _tokenB) ||
+                (path[0] == _tokenB && path[1] == _tokenA),
             "INVALID_PATH"
         );
 
-        bool isTokenAToB = path[0] == tokenA;
+        bool isTokenAToB = path[0] == _tokenA;
+
+        // Almacenar reservas en memoria para reducir accesos a estado
+        uint256 _reserveA = reserveA;
+        uint256 _reserveB = reserveB;
+
         uint256 _reserveIn;
         uint256 _reserveOut;
 
         if (isTokenAToB) {
-            _reserveIn = reserveA;
-            _reserveOut = reserveB;
+            _reserveIn = _reserveA;
+            _reserveOut = _reserveB;
         } else {
-            _reserveIn = reserveB;
-            _reserveOut = reserveA;
+            _reserveIn = _reserveB;
+            _reserveOut = _reserveA;
         }
 
         amounts = new uint256[](2);
@@ -249,20 +277,25 @@ contract SimpleSwap is ERC20, ISimpleSwap {
         IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
         emit TokenATransfer(msg.sender, address(this), amountIn);
 
-        // Update reserves
+        // Actualizar variables en memoria primero
         if (isTokenAToB) {
-            reserveA += amountIn;
-            reserveB -= amounts[1];
+            _reserveA += amountIn;
+            _reserveB -= amounts[1];
         } else {
-            reserveB += amountIn;
-            reserveA -= amounts[1];
+            _reserveB += amountIn;
+            _reserveA -= amounts[1];
         }
+
+        // Actualizar variables de estado una sola vez
+        reserveA = _reserveA;
+        reserveB = _reserveB;
 
         // Transfer output token to recipient
         IERC20(path[1]).transfer(to, amounts[1]);
         emit TokenBTransfer(address(this), to, amounts[1]);
 
         emit Swap(path[0], path[1], amountIn, amounts[1]);
+        emit Sync(reserveA, reserveB);
 
         return amounts;
     }
@@ -272,10 +305,13 @@ contract SimpleSwap is ERC20, ISimpleSwap {
         address _tokenA,
         address _tokenB
     ) external view override returns (uint256 price) {
+        // Crear copias en memoria de las variables inmutables
+        address _tokenAContract = tokenA;
+
         // Verify tokens match the pair
         require(
-            (_tokenA == tokenA && _tokenB == tokenB) ||
-                (_tokenA == tokenB && _tokenB == tokenA),
+            (_tokenA == _tokenAContract && _tokenB == tokenB) ||
+                (_tokenA == tokenB && _tokenB == _tokenAContract),
             "INVALID_PAIR"
         );
 
@@ -283,7 +319,7 @@ contract SimpleSwap is ERC20, ISimpleSwap {
         uint256 _reserveB = reserveB;
         require(_reserveA > 0 && _reserveB > 0, "NO_LIQUIDITY");
 
-        if (_tokenA == tokenA) {
+        if (_tokenA == _tokenAContract) {
             return (_reserveB * 1e18) / _reserveA;
         } else {
             return (_reserveA * 1e18) / _reserveB;
@@ -316,26 +352,33 @@ contract SimpleSwap is ERC20, ISimpleSwap {
         address _tokenA,
         address _tokenB
     ) external view override returns (uint256 _reserveA, uint256 _reserveB) {
+        // Crear copia en memoria de la variable inmutable
+        address _tokenAContract = tokenA;
+
         // Verify tokens match the pair
         require(
-            (_tokenA == tokenA && _tokenB == tokenB) ||
-                (_tokenA == tokenB && _tokenB == tokenA),
+            (_tokenA == _tokenAContract && _tokenB == tokenB) ||
+                (_tokenA == tokenB && _tokenB == _tokenAContract),
             "INVALID_PAIR"
         );
 
-        if (_tokenA == tokenA) {
-            return (reserveA, reserveB);
+        // Almacenar reservas en memoria
+        uint256 _reserveAMem = reserveA;
+        uint256 _reserveBMem = reserveB;
+
+        if (_tokenA == _tokenAContract) {
+            return (_reserveAMem, _reserveBMem);
         } else {
-            return (reserveB, reserveA);
+            return (_reserveBMem, _reserveAMem);
         }
     }
 
     /// @notice Calculates the proportion between tokens based on reserves
     /// @dev Helper function to calculate optimal amounts
-    /// @param amountA Amount of token A
-    /// @param _reserveA Reserve of token A
-    /// @param _reserveB Reserve of token B
-    /// @return amountB Equivalent amount of token B
+    /// @param amountA Amount of token A to calculate proportion for
+    /// @param _reserveA Current reserve of token A
+    /// @param _reserveB Current reserve of token B
+    /// @return amountB The calculated equivalent amount of token B based on the current reserves ratio
     function quote(
         uint256 amountA,
         uint256 _reserveA,
@@ -349,8 +392,8 @@ contract SimpleSwap is ERC20, ISimpleSwap {
 
     /// @notice Returns the minimum value between two numbers
     /// @dev Internal helper function used in liquidity calculations
-    /// @param x First number
-    /// @param y Second number
+    /// @param x First number to compare
+    /// @param y Second number to compare
     /// @return z The minimum value between x and y
     function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x < y ? x : y;
@@ -359,7 +402,7 @@ contract SimpleSwap is ERC20, ISimpleSwap {
     /// @notice Calculates the square root of a number
     /// @dev Internal helper function used in liquidity calculations
     /// @param y Number for which the square root will be calculated
-    /// @return z The square root of y
+    /// @return z The calculated square root of y, or 1 for inputs 1-3, or 0 for input 0
     function sqrt(uint256 y) internal pure returns (uint256 z) {
         if (y > 3) {
             z = y;
