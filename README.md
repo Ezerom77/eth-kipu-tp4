@@ -1,157 +1,156 @@
 # eth-kipu-tp4
 
-## Updated on 11/7/2025
+## Updated on 19/7/2025
 
 This repository contains TP4, following the course guidelines, and includes corrections to the original code to correct the problem of multiple accesses to state variables.
 
-### Deployment URL
+# SimpleSwap - ERC20 Token Exchange
 
-- https://eth-kipu-tp4.vercel.app/
+## Description
 
-### Github
+SimpleSwap is a smart contract that implements a decentralized exchange for a pair of ERC20 tokens. It allows users to add/remove liquidity and perform swaps between the two tokens in the pair. The contract is inspired by the Uniswap V2 model, using the constant product mechanism (x\*y=k) to determine exchange prices.
 
-- https://github.com/Ezerom77/eth-kipu-tp4
+## Main Features
 
-### Additional Information
+- Token exchange: Allows swapping one token for another using the constant product model
+- Liquidity management: Users can add and remove liquidity from the token pair
+- Liquidity tokens: Liquidity providers receive ERC20 tokens that represent their share in the pool
+- Slippage protection: Allows specifying minimum amounts to protect against unfavorable price changes
+- Time limit: All operations have a deadline parameter to protect against long-pending transactions
 
-- Contract addresses: 0xF81D6568B01e6F75EC35dD87558ba9B633e27116 (sepolia) (Updated 19/7)
-- https://sepolia.etherscan.io/address/0xF81D6568B01e6F75EC35dD87558ba9B633e27116#code
+## Contracts
 
-### Token addresses:
+### SimpleSwap.sol
 
-- Token A: 0xF793f2189Fab2a9580D57592ffF335703dc9Ea59
-- Token B: 0x67C180f58081F4a9f588Cf9a930e70f0E036bEC3
+Main implementation of the exchange that inherits from ERC20 (OpenZeppelin) for liquidity token management and implements the ISimpleSwap interface.
 
-## Hardhat Test
+- Tokens: Stores the addresses of the two tokens in the pair as immutable variables
+- Reserves: Keeps track of the reserves for each token
+- Events: Emits events for all important operations (adding/removing liquidity, swaps)
+- Optimization: Implements optimizations to reduce gas consumption by using memory variables
 
-### Test Result
+### ISimpleSwap.sol
 
-- Deployment - PASSED
-  ✔ This should set the tokens correctly.
-- Add initial liquidity - PASSED
-  ✔ This should add initial liquidity correctly.
-  ✔ This should add additional liquidity proportionally
-- Remove liquidity PASSED
-  ✔ Should remove liquidity correctly
-- Token swap PASSED
-  ✔ Should swap token A for token B
-  ✔ Should swap token B for token A
-- View functions PASSED
-  ✔ Should get the correct price
-  ✔ Should calculate output amount correctly
+Interface that defines the functions and events that the SimpleSwap contract must implement.
 
-#### Coverage Test
+## Main Functions
 
-- SimpleSwap.sol
-  - Stmts 92.96%
-  - Branch 54.76%
-  - Funcs 100 %
-  - Lines 90 %
+### Liquidity Management
 
-## SimpleSwap WebApp
-
-#### Main Features
-
-- Wallet Connection: Integration with MetaMask for managing transactions and user authentication.
-- Token Exchange: Allows exchange between two predefined ERC20 tokens:
-
-  - Token A: `config.js`
-  - Token B: `config.js`
-
-#### Swap Functionalities:
-
-- Token balance display
-- Real-time exchange price calculation
-- Estimation of tokens to receive
-- Liquidity pool reserves display
-- Bidirectional swap (A→B or B→A)
-
-#### Technical Features
-
-- Slippage Protection: Implements a protection mechanism by setting a minimum of tokens to receive (95% of estimated)
-- State Management: Uses React Hooks to handle state and side effects
-- Error Handling: Robust error handling system and user feedback
-- Real-time Updates: Balances and prices update automatically
-
-#### Security
-
-- Liquidity verification before executing swaps
-- Token approval (approve) before exchanges
-- Transaction timeout (20 minutes)
-- Input and application state validation
-
-#### User Interface
-
-- Intuitive interface for exchanges
-- Button to reverse swap direction
-- Clear display of:
-  - Connected account
-  - Token balances
-  - Current prices
-  - Pool reserves
-  - Success/error messages
-
-#### Requirements
-
-- MetaMask installed in the browser
-- ERC20 tokens in the wallet to perform exchanges
-- Connection to Ethereum network (Sepolia testnet)
-
-## SimpleSwap Contract Interface
-
-### Main Functions
-
-#### Liquidity Management
-
-- **addLiquidity**
+- addLiquidity
 
   - Adds liquidity to the token pair
-  - Parameters: tokenA, tokenB, desired amounts and minimums, recipient, deadline
-  - Returns: added amounts and issued liquidity tokens
+  - Parameters: tokenA, tokenB, desired and minimum amounts, recipient, deadline
+  - Returns: amounts added and liquidity tokens issued
 
-- **removeLiquidity**
-  - Withdraws liquidity from the token pair
+- removeLiquidity
+
+  - Removes liquidity from the token pair
   - Parameters: tokenA, tokenB, liquidity to burn, minimum amounts, recipient, deadline
   - Returns: amounts of tokens returned
 
-#### Swap Operations
+### Swap Operations
 
-- **swapExactTokensForTokens**
+- swapExactTokensForTokens
   - Swaps an exact amount of input tokens for output tokens
   - Parameters: input amount, minimum output amount, token path, recipient, deadline
   - Returns: array with input and output amounts
 
-#### Query Functions
+### Query Functions
 
-- **getPrice**
+- getPrice
 
   - Gets the price of one token in terms of another
   - Parameters: tokenA, tokenB
   - Returns: price with 18 decimals
 
-- **getAmountOut**
+- getAmountOut
 
   - Calculates the amount of tokens to receive in a swap
   - Parameters: input amount, input reserve, output reserve
   - Returns: amount of tokens to receive
 
-- **getReserves**
+- getReserves
+
   - Gets the current reserves of the token pair
   - Parameters: tokenA, tokenB
   - Returns: reserves of both tokens
 
-### Events
+## Events
 
-- **LiquidityAdded**
+- LiquidityAdded: Emitted when liquidity is added
+- LiquidityRemoved: Emitted when liquidity is removed
+- Swap: Emitted when a swap is executed
+- Sync: Emitted when reserves are synchronized
+- Mint: Emitted when liquidity tokens are minted
+- Burn: Emitted when liquidity tokens are burned
+- TokenATransfer and TokenBTransfer: Emitted when tokens are transferred
 
-  - Emitted when liquidity is added
-  - Parameters: tokenA, tokenB, amounts added, liquidity issued
+## Deployment
 
-- **LiquidityRemoved**
+### Deployed Contracts
 
-  - Emitted when liquidity is withdrawn
-  - Parameters: tokenA, tokenB, amounts withdrawn, liquidity burned
+- SimpleSwap: 0xF81D6568B01e6F75EC35dD87558ba9B633e27116 (Sepolia)
+- Token A: 0xF793f2189Fab2a9580D57592ffF335703dc9Ea59
+- Token B: 0x67C180f58081F4a9f588Cf9a930e70f0E036bEC3
 
-- **Swap**
-  - Emitted when a swap is executed
-  - Parameters: input token, output token, input amount, output amount
+### Verification
+
+- Contract verified on Etherscan
+  https://sepolia.etherscan.io/address/0xF81D6568B01e6F75EC35dD87558ba9B633e27116#code
+
+## Web Interface
+
+- URL: https://eth-kipu-tp4.vercel.app/
+- Repository: https://github.com/Ezerom77/eth-kipu-tp4
+
+### Web Application Features
+
+- Wallet connection (MetaMask)
+- Token balance display
+- Real-time exchange price calculation
+- Estimation of tokens to receive
+- Liquidity pool reserves display
+- Bidirectional exchange (A→B or B→A)
+- Slippage protection
+- Error handling and user feedback
+
+## Requirements
+
+- MetaMask installed in the browser
+- ERC20 tokens in the wallet to perform exchanges
+- Connection to the Ethereum network (Sepolia testnet)
+
+## Tests
+
+The contract has been thoroughly tested with Hardhat:
+
+- Deployment: ✅ PASSED
+- Initial liquidity addition: ✅ PASSED
+- Additional liquidity addition: ✅ PASSED
+- Liquidity removal: ✅ PASSED
+- Token exchange: ✅ PASSED
+- Query functions: ✅ PASSED
+
+### Test Coverage
+
+- Statements: 94.57%
+- Branch: 54.76%
+- Functions: 100%
+- Lines: 91.97%
+
+## Technical Notes
+
+- The contract uses the OpenZeppelin library for ERC20 standard implementation
+- Optimizations are implemented to reduce gas consumption by using memory variables
+- The contract does not include exchange fees
+- The constant product formula is implemented without fees: (reserveIn + amountIn) _ (reserveOut - amountOut) = reserveIn _ reserveOut
+
+## Updates
+
+- Last update: 19/7/2025
+- Contract updated: 19/7/2025
+
+## Author
+
+- Ezerom77
