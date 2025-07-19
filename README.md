@@ -14,7 +14,8 @@ This repository contains TP4, following the course guidelines, and includes corr
 
 ### Additional Information
 
-- Contract addresses: 0xB93ce83E2D6D805F2EA3F575D2B0FEd568AE3a90 (sepolia) (Updated 11/7)
+- Contract addresses: 0xF81D6568B01e6F75EC35dD87558ba9B633e27116 (sepolia) (Updated 19/7)
+- https://sepolia.etherscan.io/address/0xF81D6568B01e6F75EC35dD87558ba9B633e27116#code
 
 ### Token addresses:
 
